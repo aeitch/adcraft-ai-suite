@@ -4,6 +4,7 @@ import {
   LayoutGrid,
   Sparkles,
   FileText,
+  Building2,
   Settings,
   HelpCircle,
   LogOut,
@@ -13,6 +14,7 @@ const navItems = [
   { icon: Home, label: "Home", active: false },
   { icon: LayoutGrid, label: "Dashboard", active: true },
   { icon: Sparkles, label: "Generator", active: false },
+  { icon: Building2, label: "Agency", active: false },
   { icon: FileText, label: "Templates", active: false },
 ];
 
