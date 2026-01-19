@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Building2, LogOut } from "lucide-react";
+import { Download, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NetworkBackground } from "@/components/NetworkBackground";
 import { CircuitDecorations } from "@/components/CircuitDecorations";
@@ -16,22 +16,51 @@ import { AgenticModeToggle } from "@/components/AgenticModeToggle";
 import { NaturalLanguageRefinement } from "@/components/NaturalLanguageRefinement";
 import { InstantRetrievalLoader } from "@/components/InstantRetrievalLoader";
 import { PerformanceMetrics } from "@/components/PerformanceMetrics";
-import { AgencyPortal } from "@/components/AgencyPortal";
 import { ExportDialog } from "@/components/ExportDialog";
-import { useAuth } from "@/hooks/useAuth";
+import { BrandFileUpload } from "@/components/BrandFileUpload";
+import { BrandSelector, type BrandAccountOption } from "@/components/BrandSelector";
 import { useAdGeneration } from "@/hooks/useAdGeneration";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const { user, loading, signOut, isAuthenticated } = useAuth();
-  const { isGenerating, generationStep, generatedContent, generateAd } = useAdGeneration();
-  
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const { isGenerating, generationStep, generatedContent, generateAd } =
+    useAdGeneration();
+
   const [activeTab, setActiveTab] = useState("linkedin");
   const [agenticMode, setAgenticMode] = useState(false);
-  const [showAgencyPortal, setShowAgencyPortal] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
 
-  const handleGenerate = async (prompt: string) => {
-    await generateAd(prompt, activeTab, agenticMode);
+  const [prompt, setPrompt] = useState(
+    "Generate a high-conversion LinkedIn post for our new SaaS platform, emphasizing AI and automation."
+  );
+
+  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
+  const [brands, setBrands] = useState<BrandAccountOption[]>([]);
+
+  const [showBrandUpload, setShowBrandUpload] = useState(false);
+
+  const selectedBrand = useMemo(
+    () => brands.find((b) => b.id === selectedBrandId) ?? null,
+    [brands, selectedBrandId]
+  );
+
+  const brandContext = useMemo(() => {
+    if (!selectedBrand) return undefined;
+    return `Brand: ${selectedBrand.name}\nRAG Status: ${selectedBrand.rag_status}`;
+  }, [selectedBrand]);
+
+  const handleGenerate = async (p: string) => {
+    await generateAd(p, activeTab, agenticMode, agenticMode ? brandContext : undefined);
   };
 
   const handleRefine = (refinementPrompt: string) => {
@@ -39,37 +68,6 @@ const Index = () => {
       handleGenerate(refinementPrompt);
     }
   };
-
-  if (showAgencyPortal) {
-    return (
-      <div className="h-screen flex flex-col bg-background overflow-hidden">
-        <NetworkBackground />
-        <CircuitDecorations />
-        <Header />
-        <div className="flex-1 flex overflow-hidden relative z-10">
-          <NavigationSidebar />
-          <main className="flex-1 flex flex-col overflow-hidden">
-            <div className="px-6 py-3 border-b border-border flex items-center justify-between">
-              <Button
-                variant="ghost"
-                onClick={() => setShowAgencyPortal(false)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                ← Back to Generator
-              </Button>
-              {isAuthenticated && (
-                <Button variant="ghost" onClick={signOut} className="text-muted-foreground">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </Button>
-              )}
-            </div>
-            <AgencyPortal />
-          </main>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -98,18 +96,26 @@ const Index = () => {
                   transition={{ delay: 0.1 }}
                   className="text-muted-foreground"
                 >
-                  {isAuthenticated ? `Welcome back! ` : ""}Central Brain for Marketing
+                  Central Brain for Marketing
                 </motion.p>
               </div>
+
               <div className="flex items-center gap-3">
+                <BrandSelector
+                  value={selectedBrandId}
+                  onChange={setSelectedBrandId}
+                  onLoaded={setBrands}
+                />
+
                 <Button
                   variant="outline"
-                  onClick={() => setShowAgencyPortal(true)}
+                  onClick={() => navigate("/agency")}
                   className="border-border text-foreground hover:bg-muted gap-2"
                 >
                   <Building2 className="w-4 h-4" />
                   Agency Portal
                 </Button>
+
                 {generatedContent && (
                   <Button
                     variant="outline"
@@ -120,24 +126,64 @@ const Index = () => {
                     Export
                   </Button>
                 )}
-                <Button className="btn-glow bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
+
+                <Button
+                  onClick={() => handleGenerate(prompt)}
+                  disabled={isGenerating}
+                  className="btn-glow bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
+                >
                   <Download className="w-4 h-4" />
                   Generate ad copy
                 </Button>
               </div>
             </div>
+
             <PlatformTabs activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            <AgenticModeToggle isEnabled={agenticMode} onToggle={setAgenticMode} />
-            <PromptInput onGenerate={handleGenerate} isGenerating={isGenerating} />
-            <NaturalLanguageRefinement onRefine={handleRefine} disabled={isGenerating || !generatedContent} />
-            <InstantRetrievalLoader isVisible={isGenerating} currentStep={generationStep} />
-            
+            <AgenticModeToggle
+              isEnabled={agenticMode}
+              onToggle={setAgenticMode}
+              onUploadClick={() => {
+                if (!selectedBrandId) {
+                  toast({
+                    title: "Select a brand first",
+                    description: "Pick a brand in the top bar to upload Brand History files.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                setShowBrandUpload(true);
+              }}
+            />
+
+            <PromptInput
+              prompt={prompt}
+              onPromptChange={setPrompt}
+              onGenerate={handleGenerate}
+              isGenerating={isGenerating}
+              onOpenSettings={() => navigate("/settings")}
+              onOpenTemplates={() => navigate("/templates")}
+              onClearPrompt={() => setPrompt("")}
+            />
+
+            <NaturalLanguageRefinement
+              onRefine={handleRefine}
+              disabled={isGenerating || !generatedContent}
+            />
+
+            <InstantRetrievalLoader
+              isVisible={isGenerating}
+              currentStep={generationStep}
+            />
+
             <AnimatePresence>
               {!isGenerating && (
-                <AdCopyEditor isGenerating={isGenerating} generatedContent={generatedContent} />
+                <AdCopyEditor
+                  isGenerating={isGenerating}
+                  generatedContent={generatedContent}
+                />
               )}
             </AnimatePresence>
 
@@ -157,6 +203,15 @@ const Index = () => {
         content={generatedContent}
         platform={activeTab}
       />
+
+      <Dialog open={showBrandUpload} onOpenChange={setShowBrandUpload}>
+        <DialogContent className="max-w-2xl bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Upload Brand History</DialogTitle>
+          </DialogHeader>
+          <BrandFileUpload brandAccountId={selectedBrandId ?? undefined} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

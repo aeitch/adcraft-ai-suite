@@ -2,21 +2,31 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Image, Mic, RefreshCw, FileText, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface PromptInputProps {
+  prompt: string;
+  onPromptChange: (next: string) => void;
   onGenerate: (prompt: string) => void;
   isGenerating: boolean;
+  onOpenSettings?: () => void;
+  onOpenTemplates?: () => void;
+  onClearPrompt?: () => void;
 }
 
-export const PromptInput = ({ onGenerate, isGenerating }: PromptInputProps) => {
-  const [prompt, setPrompt] = useState(
-    "Generate a high-conversion LinkedIn post for our new SaaS platform, emphasizing AI and automation."
-  );
+export const PromptInput = ({
+  prompt,
+  onPromptChange,
+  onGenerate,
+  isGenerating,
+  onOpenSettings,
+  onOpenTemplates,
+  onClearPrompt,
+}: PromptInputProps) => {
+  const { toast } = useToast();
 
   const handleSubmit = () => {
-    if (prompt.trim()) {
-      onGenerate(prompt);
-    }
+    if (prompt.trim()) onGenerate(prompt);
   };
 
   return (
@@ -26,12 +36,11 @@ export const PromptInput = ({ onGenerate, isGenerating }: PromptInputProps) => {
       transition={{ duration: 0.5 }}
       className="rounded-xl bg-card border border-border overflow-hidden"
     >
-      {/* Prompt Area */}
       <div className="p-4">
         <div className="relative">
           <textarea
             value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            onChange={(e) => onPromptChange(e.target.value)}
             placeholder="Describe the ad copy you want to generate..."
             className="w-full min-h-[80px] bg-transparent text-foreground placeholder:text-muted-foreground resize-none focus:outline-none"
           />
@@ -59,34 +68,54 @@ export const PromptInput = ({ onGenerate, isGenerating }: PromptInputProps) => {
         </div>
       </div>
 
-      {/* Actions Bar */}
       <div className="flex items-center justify-between p-3 border-t border-border bg-muted/30">
         <div className="flex items-center gap-2">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() =>
+              toast({
+                title: "Image",
+                description: "Image-to-ad generation is coming next.",
+              })
+            }
             className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label="Image"
           >
             <Image className="w-4 h-4" />
           </motion.button>
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() =>
+              toast({
+                title: "Voice",
+                description: "Voice input is coming next.",
+              })
+            }
             className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label="Voice"
           >
             <Mic className="w-4 h-4" />
           </motion.button>
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => (onClearPrompt ? onClearPrompt() : onPromptChange(""))}
             className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label="Clear prompt"
           >
             <RefreshCw className="w-4 h-4" />
           </motion.button>
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={onOpenTemplates}
             className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label="Templates"
           >
             <FileText className="w-4 h-4" />
           </motion.button>
@@ -97,14 +126,13 @@ export const PromptInput = ({ onGenerate, isGenerating }: PromptInputProps) => {
             variant="ghost"
             size="sm"
             className="text-muted-foreground hover:text-foreground"
+            onClick={onOpenSettings}
           >
             <Settings className="w-4 h-4 mr-2" />
             Settings
           </Button>
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
+
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button
               onClick={handleSubmit}
               disabled={isGenerating}
