@@ -1,13 +1,18 @@
 import { motion } from "framer-motion";
-import { Brain, Zap, Upload } from "lucide-react";
+import { Brain, Upload } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 interface AgenticModeToggleProps {
   isEnabled: boolean;
   onToggle: (enabled: boolean) => void;
+  onUploadClick?: () => void;
 }
 
-export const AgenticModeToggle = ({ isEnabled, onToggle }: AgenticModeToggleProps) => {
+export const AgenticModeToggle = ({
+  isEnabled,
+  onToggle,
+  onUploadClick,
+}: AgenticModeToggleProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -61,10 +66,12 @@ export const AgenticModeToggle = ({ isEnabled, onToggle }: AgenticModeToggleProp
       <div className="flex items-center gap-3">
         {isEnabled && (
           <motion.button
+            type="button"
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={onUploadClick}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors"
           >
             <Upload className="w-4 h-4" />
