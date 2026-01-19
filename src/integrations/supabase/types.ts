@@ -41,6 +41,39 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action: string
+          agency_id: string | null
+          brand_account_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          agency_id?: string | null
+          brand_account_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          agency_id?: string | null
+          brand_account_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       brand_accounts: {
         Row: {
           ads_generated: number
@@ -132,6 +165,30 @@ export type Database = {
           },
         ]
       }
+      brand_preferences: {
+        Row: {
+          brand_account_id: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand_account_id: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand_account_id?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       generated_ads: {
         Row: {
           agentic_mode: boolean
@@ -182,6 +239,39 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          brand_account_id: string | null
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          brand_account_id?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          brand_account_id?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -209,6 +299,48 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      templates: {
+        Row: {
+          body_text: string | null
+          brand_account_id: string
+          call_to_action: string | null
+          created_at: string
+          created_by: string
+          headline: string | null
+          id: string
+          name: string
+          platform: string
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          body_text?: string | null
+          brand_account_id: string
+          call_to_action?: string | null
+          created_at?: string
+          created_by: string
+          headline?: string | null
+          id?: string
+          name: string
+          platform: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          body_text?: string | null
+          brand_account_id?: string
+          call_to_action?: string | null
+          created_at?: string
+          created_by?: string
+          headline?: string | null
+          id?: string
+          name?: string
+          platform?: string
+          tags?: string[] | null
+          updated_at?: string
         }
         Relationships: []
       }
