@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Building2 } from "lucide-react";
+import { Download, Building2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NetworkBackground } from "@/components/NetworkBackground";
 import { CircuitDecorations } from "@/components/CircuitDecorations";
@@ -17,50 +17,21 @@ import { NaturalLanguageRefinement } from "@/components/NaturalLanguageRefinemen
 import { InstantRetrievalLoader } from "@/components/InstantRetrievalLoader";
 import { PerformanceMetrics } from "@/components/PerformanceMetrics";
 import { AgencyPortal } from "@/components/AgencyPortal";
+import { ExportDialog } from "@/components/ExportDialog";
+import { useAuth } from "@/hooks/useAuth";
+import { useAdGeneration } from "@/hooks/useAdGeneration";
 
 const Index = () => {
+  const { user, loading, signOut, isAuthenticated } = useAuth();
+  const { isGenerating, generationStep, generatedContent, generateAd } = useAdGeneration();
+  
   const [activeTab, setActiveTab] = useState("linkedin");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationStep, setGenerationStep] = useState(0);
   const [agenticMode, setAgenticMode] = useState(false);
   const [showAgencyPortal, setShowAgencyPortal] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState<{
-    headline: string;
-    bodyText: string;
-    callToAction: string;
-  } | null>(null);
+  const [showExportDialog, setShowExportDialog] = useState(false);
 
   const handleGenerate = async (prompt: string) => {
-    setIsGenerating(true);
-    setGeneratedContent(null);
-    setGenerationStep(1);
-
-    // Step 1: Retrieving Brand Context
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setGenerationStep(2);
-
-    // Step 2: Analyzing Historical Success
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setGenerationStep(3);
-
-    // Step 3: Generating Optimized Copy
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    // RAG-grounded response
-    setGeneratedContent({
-      headline: agenticMode 
-        ? "🚀 Transform Your Marketing with AI-Powered Intelligence"
-        : "Accelerate Your Ad Performance with AdCraft AI",
-      bodyText: agenticMode
-        ? "Our enterprise clients are seeing a 25% lift in ad performance using our Central Brain technology. Powered by 1,000+ indexed successful campaigns and real-time brand context, AdCraft AI delivers copy that converts. Join leading agencies managing 50+ brands on our platform."
-        : "Generate high-conversion ad copy in seconds, not hours. Our RAG-powered AI analyzes your brand context and successful templates to create optimized content for LinkedIn, Meta, and Google Ads.",
-      callToAction: agenticMode
-        ? "Schedule Enterprise Demo →"
-        : "Start Free Trial",
-    });
-
-    setIsGenerating(false);
-    setGenerationStep(0);
+    await generateAd(prompt, activeTab, agenticMode);
   };
 
   const handleRefine = (refinementPrompt: string) => {
@@ -86,6 +57,12 @@ const Index = () => {
               >
                 ← Back to Generator
               </Button>
+              {isAuthenticated && (
+                <Button variant="ghost" onClick={signOut} className="text-muted-foreground">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              )}
             </div>
             <AgencyPortal />
           </main>
@@ -96,24 +73,15 @@ const Index = () => {
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
-      {/* Network Animation Background */}
       <NetworkBackground />
       <CircuitDecorations />
-
-      {/* Header */}
       <Header />
 
-      {/* Main Content */}
       <div className="flex-1 flex overflow-hidden relative z-10">
-        {/* Navigation Sidebar */}
         <NavigationSidebar />
-
-        {/* RAG Knowledge Base Sidebar */}
         <RAGSidebar />
 
-        {/* Main Content Area */}
         <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Content Header */}
           <div className="px-6 py-4 border-b border-border">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -130,87 +98,65 @@ const Index = () => {
                   transition={{ delay: 0.1 }}
                   className="text-muted-foreground"
                 >
-                  AdCraft AI Content Intelligence dashboard · Central Brain for Marketing
+                  {isAuthenticated ? `Welcome back! ` : ""}Central Brain for Marketing
                 </motion.p>
               </div>
               <div className="flex items-center gap-3">
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAgencyPortal(true)}
+                  className="border-border text-foreground hover:bg-muted gap-2"
                 >
+                  <Building2 className="w-4 h-4" />
+                  Agency Portal
+                </Button>
+                {generatedContent && (
                   <Button
                     variant="outline"
-                    onClick={() => setShowAgencyPortal(true)}
+                    onClick={() => setShowExportDialog(true)}
                     className="border-border text-foreground hover:bg-muted gap-2"
                   >
-                    <Building2 className="w-4 h-4" />
-                    Agency Portal
-                  </Button>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button className="btn-glow bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
                     <Download className="w-4 h-4" />
-                    Generate ad copy
+                    Export
                   </Button>
-                </motion.div>
+                )}
+                <Button className="btn-glow bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
+                  <Download className="w-4 h-4" />
+                  Generate ad copy
+                </Button>
               </div>
             </div>
-
-            {/* Platform Tabs */}
             <PlatformTabs activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
 
-          {/* Scrollable Content */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {/* Agentic Mode Toggle */}
-            <AgenticModeToggle
-              isEnabled={agenticMode}
-              onToggle={setAgenticMode}
-            />
-
-            {/* Prompt Input */}
+            <AgenticModeToggle isEnabled={agenticMode} onToggle={setAgenticMode} />
             <PromptInput onGenerate={handleGenerate} isGenerating={isGenerating} />
-
-            {/* Natural Language Refinement */}
-            <NaturalLanguageRefinement
-              onRefine={handleRefine}
-              disabled={isGenerating || !generatedContent}
-            />
-
-            {/* Instant Retrieval Loader - Chain of Thought */}
-            <InstantRetrievalLoader
-              isVisible={isGenerating}
-              currentStep={generationStep}
-            />
-
-            {/* Ad Copy Editor */}
+            <NaturalLanguageRefinement onRefine={handleRefine} disabled={isGenerating || !generatedContent} />
+            <InstantRetrievalLoader isVisible={isGenerating} currentStep={generationStep} />
+            
             <AnimatePresence>
               {!isGenerating && (
-                <AdCopyEditor
-                  isGenerating={isGenerating}
-                  generatedContent={generatedContent}
-                />
+                <AdCopyEditor isGenerating={isGenerating} generatedContent={generatedContent} />
               )}
             </AnimatePresence>
 
-            {/* Performance Metrics - Beta Results */}
             {generatedContent && !isGenerating && (
               <PerformanceMetrics showHighMatch={true} templatesUsed={847} />
             )}
 
-            {/* Analytics Dashboard */}
             <AnalyticsDashboard />
-
-            {/* Security Badges */}
             <SecurityBadges />
           </div>
         </main>
       </div>
+
+      <ExportDialog
+        isOpen={showExportDialog}
+        onClose={() => setShowExportDialog(false)}
+        content={generatedContent}
+        platform={activeTab}
+      />
     </div>
   );
 };
